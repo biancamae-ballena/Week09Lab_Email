@@ -5,22 +5,50 @@
  */
 package services;
 
+import dataaccess.UserDB;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import models.User;
+
 /**
  *
  * @author 785284
  */
 public class AccountService {
-    public boolean changePassword(String uuid, String password) {
-        UserService us = new UserService();
+    public User login(String username, String password, String path) {
         try {
-            User user = us.getByUUID(uuid);
-            user.setUserPassword(password);
-            user.setResetPasswordUUID(null);
-            UserDB ur = new UserDB ();
-            ur.update(user);
-            return true;
-        } catch (Exception ex) {
-            return false;
+            UserDB userDB = new UserDB();
+            User user = userDB.getUser(username);
+
+            if (user.getPassword().equals(password)) {
+                // successful login
+                Logger.getLogger(AccountService.class.getName())
+                        .log(Level.INFO, "User {0} logged in.", user.getUsername());
+                
+                // send email upon successful login
+                //GmailService.sendMail(user.getEmail(), "Notes App Login",
+                //        "Hi " + user.getFirstname() + "\nYou just logged in.", false);
+                String email = user.getEmail();
+                String subject = "Notes App Login";
+                String template = path + "/emailtemplates/login.html";
+                
+                HashMap<String, String> tags = new HashMap<>();
+                tags.put("firstname", user.getFirstname());
+                tags.put("date", ((new java.util.Date())).toString());
+                
+                GmailService.sendMail(email, subject, template, tags);
+                
+                return user;
+            }
+        } catch (Exception e) {
+
         }
+
+        return null;
+    }
+
+    public boolean forgotPassword(String email) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
